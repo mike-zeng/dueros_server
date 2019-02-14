@@ -13,8 +13,14 @@ import java.io.IOException;
 @Controller
 public class AmeetingController {
 
-    @RequestMapping(value = "/",method = RequestMethod.POST)
+
+    @RequestMapping(value = "/ameeting",method = RequestMethod.HEAD)
+    public void doHead(HttpServletResponse response){
+        response.setStatus(204);
+    }
+    @RequestMapping(value = "/ameeting",method = RequestMethod.POST)
     public void service(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        response.setStatus(204);
         AmeetingBot bot;
         bot=new AmeetingBot(request);
         try {

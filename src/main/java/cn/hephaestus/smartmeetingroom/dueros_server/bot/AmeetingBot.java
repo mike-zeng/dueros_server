@@ -8,18 +8,16 @@ import cn.hephaestus.smartmeetingroom.dueros_server.service.*;
 import cn.hephaestus.smartmeetingroom.dueros_server.utils.SpringUtil;
 import com.baidu.dueros.bot.BaseBot;
 
-import com.baidu.dueros.data.request.Context;
 import com.baidu.dueros.data.request.IntentRequest;
 import com.baidu.dueros.data.request.LaunchRequest;
 import com.baidu.dueros.data.request.SessionEndedRequest;
 import com.baidu.dueros.data.response.OutputSpeech;
+import com.baidu.dueros.data.response.card.TextCard;
 import com.baidu.dueros.model.Response;
 import com.fasterxml.jackson.databind.JsonMappingException;
-import org.mybatis.spring.annotation.MapperScan;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -27,7 +25,7 @@ import java.util.Date;
 public class AmeetingBot extends BaseBot {
 
     HttpServletRequest request=null;
-    public AmeetingBot(HttpServletRequest request) throws IOException, JsonMappingException {
+    public AmeetingBot(HttpServletRequest request) throws IOException{
         super(request);
         this.request=request;
     }
@@ -51,6 +49,10 @@ public class AmeetingBot extends BaseBot {
             //获取用户手机号
             RedisService redisService=SpringUtil.getBean(RedisService.class);
             String phoneNumber= getSlot("phoneNumber");
+            if (phoneNumber==null){
+                ask("phoneNumber");
+                return getSimpleResponse("请告诉我你想绑定的手机号");
+            }
 
             //获取dueros设备用户身份信息
             String deviceId=getDeviceId();
@@ -71,8 +73,10 @@ public class AmeetingBot extends BaseBot {
         if (intentName.equals("inquireMeeting")){
 
             String dateStr=getSlot("date");
-            String timeStr=getSlot("time");
-
+            if (dateStr==null){
+                ask("date");
+                return getSimpleResponse("请告诉我你想查询哪一天的会议");
+            }
             //构造日期
             SimpleDateFormat sDateFormat=new SimpleDateFormat("yyyy-MM-dd");
             Date date=null;
@@ -125,8 +129,6 @@ public class AmeetingBot extends BaseBot {
                 ask("count");
                 return getSimpleResponse("请告诉大概有多少人参加会议，以方便我为你找到容量足够的会议室");
             }
-
-
             if (topic==null){
                 ask("topic");
                 return getSimpleResponse("请告诉我会议的主题");
@@ -173,26 +175,27 @@ public class AmeetingBot extends BaseBot {
                 }
             }catch (Exception e){
                 e.printStackTrace();
+                return getSimpleResponse("预定失败，请稍后再试");
             }
-
-            return getSimpleResponse("已经为你预定会议室，你可以在App中完成更多功能");
         }
 
         return getSimpleResponse("很抱歉，我无法为你解答这个问题");
     }
 
-    public Response getSimpleResponse(String msg){
-        return new Response(new OutputSpeech(OutputSpeech.SpeechType.PlainText,msg));
-    }
-
     @Override
     protected Response onLaunch(LaunchRequest launchRequest) {
-        System.out.println("onLaunch");
-        return this.response;
+        return getSimpleResponse("你好，会议助手很高兴为你服务");
     }
 
     @Override
     protected Response onSessionEnded(SessionEndedRequest sessionEndedRequest) {
-        return this.response;
+        return getSimpleResponse("感谢你的使用");
     }
+
+    public Response getSimpleResponse(String msg){
+//        TextCard card=new TextCard();
+//        card.setContent(msg);
+        return new Response(new OutputSpeech(OutputSpeech.SpeechType.PlainText,msg));
+    }
+
 }
